@@ -9,18 +9,51 @@ public:
 };
 
 class Enemy {
-public: 
+public:
+
     int health;
     float speed;
     int damage;
 
-    
+    sf::Vector2f position;
+
+    sf::Texture texture;
+    sf::Sprite enemySprite;
+
+    Enemy(const std::string& path)
+        : texture(path), enemySprite(texture)
+    {
+    }
 };
+
 
 class Werewolf : public Enemy {
 public:
-    Werewolf() {
-        speed = 50.0f;
+    Werewolf() : Enemy("Images/werewolf.png"){
+        speed = 700.0f;
+        health = 200;
+        damage = 10;
+        position = sf::Vector2f(960, 540);
+    }
+};
+
+class Zombie : public Enemy {
+public:
+    Zombie() : Enemy("Images/zombie.png") {
+        speed = 300.0f;
+        health = 200;
+        damage = 10;
+        position = sf::Vector2f(960, 540);
+    }
+};
+
+class Ghost : public Enemy {
+public:
+    Ghost() : Enemy("Images/ghost.png") {
+        speed = 500.0f;
+        health = 200;
+        damage = 10;
+        position = sf::Vector2f(960, 540);
     }
 };
 
@@ -31,17 +64,6 @@ public:
     float speed = 800.0f;
     
 };
-
-
-//bool validMove(sf::Vector2f& vPlayerMovement, sf::RenderWindow& window) {
-//    sf::Vector2u windowsize = window.getSize();
-//
-//
-//    if (vPlayerMovement.x >= 0 && vPlayerMovement.y >= 0 && vPlayerMovement.x <= windowsize.x  && vPlayerMovement.y <= windowsize.y) {
-//        return true;
-//    }
-//    return false;
-//};
 
 sf::Vector2f Normalise(const sf::Vector2f& rVector) {
         float fLength = sqrt(rVector.x * rVector.x + rVector.y * rVector.y);
@@ -59,25 +81,14 @@ int main()
     playerTexture.loadFromFile("Images/player.png");
     sf::Sprite player(playerTexture);
 
-    sf::Texture enemyTexture2;
-    enemyTexture2.loadFromFile("Images/zombie.png");
-    sf::Sprite enemy2(enemyTexture2);
-    enemy2.setPosition(sf::Vector2f(960, 540));
-
-    sf::Texture enemyTexture3;
-    enemyTexture3.loadFromFile("Images/werewolf.png");
-    sf::Sprite enemy3(enemyTexture3);
-    enemy3.setPosition(sf::Vector2f(960, 540));
-
-    sf::Texture enemyTexture;
-    enemyTexture.loadFromFile("Images/ghost.png");
-    sf::Sprite enemy(enemyTexture);
-    enemy.setPosition(sf::Vector2f(960, 540));
-
     sf::Clock clock;
     Player p;
     
-
+    std::vector<sf::CircleShape> bullets;
+    std::vector<std::unique_ptr<Enemy>> enemies;
+    enemies.push_back(std::make_unique<Werewolf>());
+    enemies.push_back(std::make_unique<Zombie>());
+    enemies.push_back(std::make_unique<Ghost>());
 
     while (window.isOpen())
     {
@@ -110,19 +121,6 @@ int main()
         player.move(vPlayerMovement * lastFrame.asSeconds() * p.speed);
 
 
-        sf::Vector2f vEnemyMove = player.getPosition() - enemy.getPosition();
-        vEnemyMove = Normalise(vEnemyMove);
-        enemy.move(vEnemyMove * lastFrame.asSeconds() * 600.0f);
-
-        sf::Vector2f vEnemyMove2 = player.getPosition() - enemy2.getPosition();
-        vEnemyMove2 = Normalise(vEnemyMove2);
-        enemy2.move(vEnemyMove2 * lastFrame.asSeconds() * 200.0f);
-
-        sf::Vector2f vEnemyMove3 = player.getPosition() - enemy3.getPosition();
-        vEnemyMove3 = Normalise(vEnemyMove3);
-        enemy3.move(vEnemyMove3 * lastFrame.asSeconds() * 900.0f);
-
-
         
         // sets a rectangular boundry that holds the player sprite, ensuring it cant move off the window
         sf::Vector2f position = player.getPosition();
@@ -132,11 +130,35 @@ int main()
         position.y = std::clamp(position.y, 0.f, windowSize.y - bounds.size.y);
         player.setPosition(position);
 
+
+        
+        /*if (sf::Event::MouseButtonPressed(sf::Mouse::Button::Left)) {
+            bullets.push_back(sf::CircleShape());
+            bullets.back().setRadius(5);
+            bullets.back().setPosition(player.getPosition());
+        }
+
+        sf::Vector2f bulletMove =
+            window.mapPixelToCoords(sf::Mouse::getPosition(window))
+            - bullets.back().getPosition();
+        bulletMove = Normalise(bulletMove);*/
+       
+
         window.clear();
         window.draw(player);
-        window.draw(enemy);
-        window.draw(enemy2);
-        window.draw(enemy3);
+        /*for (int i = 0; i < bullets.size(); i++) {
+            window.draw(bullets[i]);
+            bullets[i].move(bulletMove * lastFrame.asSeconds() * 900.0f);
+            
+        }*/
+        if (enemies.size() != 0) {
+            for (int i = 0; i < enemies.size(); i++) {
+                window.draw(enemies[i]->enemySprite);
+                sf::Vector2f vEnemyMove = player.getPosition() - enemies[i]->enemySprite.getPosition();
+                vEnemyMove = Normalise(vEnemyMove);
+                enemies[i]->enemySprite.move(vEnemyMove * lastFrame.asSeconds() * enemies[i]->speed);
+            }
+        } 
         window.display();
     }
 }
